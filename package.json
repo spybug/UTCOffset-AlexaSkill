@@ -3,12 +3,10 @@
   "version": "1.0.0",
   "description": "Lambda function for Alexa skill that calculates UTC offsets",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
+  "author": "Karl I",
   "license": "ISC",
   "dependencies": {
-    "alexa-sdk": "^1.0.11"
+    "alexa-sdk": "^1.0.11",
+    "moment": "^2.18.1"
   }
 }
