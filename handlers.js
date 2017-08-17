@@ -1,9 +1,19 @@
 'use strict';
 var moment = require('moment');
+var gmaps = require('googlemaps');
 //var https = require('https');
 const ASK = ':ask';
 const TELL = ':tell';
 const UTC_SSML = "<say-as interpret-as='spell-out'>utc</say-as>";
+
+var gmapsConfig = {
+    key: process.env['GMAPS_API_KEY'],
+    stagger_time:       100, // for elevationPath
+    encode_polylines:   false,
+    secure:             true, // use https
+};
+
+var gmapsAPI = gmaps(gmapsConfig);
 
 module.exports = {
 
@@ -12,38 +22,43 @@ module.exports = {
     },
 
     "GetUTCTime": function() {
-		
+
 		var timestamp = moment(this.event.request.timestamp);
 		var datestr = timestamp.format("MMDD");
 		var timestr = timestamp.format("HH:mm");
 		var datessml = `<say-as interpret-as='date'>????${datestr}</say-as>`;
-		
+
 		var result = `The current ${UTC_SSML} time is: ${timestr}, on ${datessml}`;
-		
+
         this.emit(TELL, result);
 	},
-	
-	"GetLocalOffset": function() {
+
+	"GetCityOffset": function() {
 		try {
-			var deviceId = this.event.context.System.device.deviceId;
-			var token = this.event.context.System.user.permissions.consentToken;
-			alexa_location = module.exports.getAlexaLocation(deviceId, token);
-			lat_lon = module.exports.getLatLon(alexa_location.countryCode, alexa_location.postalCode);
+            if(this.event.request.intent.slots.location_us.value !== undefined) {
+                loc = this.event.request.intent.slots.location_us.value
+                var geocodeParams = {
+                    address=loc
+                };
+                gmapsAPI.geocode(geocodeParams, function(err, result){
+                  console.log(result);
+                });
+            }
 		}
 		catch(e) {
 			this.emit(TELL, "Error getting local time from device");
 			console.log(e)
 		}
 	},
-	
+
 	"AMAZON.HelpIntent": function() {
 		this.emit(ASK, `Please ask for the current time in ${UTC_SSML}`);
 	},
-	
+
 	"AMAZON.CancelIntent": function() {
 		this.emit(TELL, 'Goodbye.');
 	},
-	
+
 	"AMAZON.StopIntent": function() {
 		this.emit(TELL, 'Goodbye.');
 	},
@@ -61,13 +76,13 @@ module.exports = {
 			res.on('end', () => {
 				var data = JSON.parse(body);
 				console.log(data);
-				return { 
+				return {
 					countryCode: data.countryCode,
 					postalCode: data.postalCode
 				};
 			});
 		})
-	}, 
+	},
 
 	getLatLon : function(countryCode, postalCode) {
 		console.log(countryCode);
