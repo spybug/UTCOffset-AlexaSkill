@@ -15,21 +15,31 @@ var gmapsConfig = {
 
 var gmapsAPI = new gmaps(gmapsConfig);
 
-var getLatLon = function(location) {
+var getLatLon = function(context, location, callback) {
     var geocodeParams = {
         'address' : location
     };
     gmapsAPI.geocode(geocodeParams, function(err, result) {
-      console.log(result);
       var latlon = result.results[0].geometry.location;
-      console.log(latlon);
-
-      return latlon;
+      var timezone = callback(context, location, latlon.lat, latlon.lng);
+      return timezone;
     });
 };
 
-var getTimezone = function(lat, lon) {
-    return true;
+var getTimezone = function(context, locname, lat, lon) {
+    var timezoneParams = {
+        'location' : `${lat},${lon}`,
+        'timestamp' : moment().unix()
+    };
+    gmapsAPI.timezone(timezoneParams, function(err, result) {
+        console.log(result);
+        var timezoneOffset = (result.rawOffset + result.dstOffset) / 3600;
+        var compareWord = "ahead of";
+        if (timezoneOffset < 0) {
+            compareWord = "behind";
+        }
+        context.emit(TELL, `The current offset in ${locname} is <break time="200ms"/> ${timezoneOffset} hours ${compareWord} ${UTC_SSML} time.`);
+    });
 };
 
 module.exports = {
@@ -55,9 +65,7 @@ module.exports = {
             if(this.event.request.intent.slots.location_us.value !== undefined) {
                 var loc = this.event.request.intent.slots.location_us.value
                 console.log(loc);
-                var latlon = getLatLon(loc);
-
-                this.emit(TELL, latlon);
+                var result = getLatLon(this, loc, getTimezone);
             }
 		}
 		catch(e) {
@@ -76,26 +84,5 @@ module.exports = {
 
 	"AMAZON.StopIntent": function() {
 		this.emit(TELL, 'Goodbye.');
-	},
-
-	getAlexaLocation : function(deviceId, token) {
-		var alexa_api = `https://api.amazonalexa.com/v1/devices/${deviceId}/settings/address/countryAndPostalCode`
-		var alexa_headers = {'Accept': 'application/json', 'Authorization': `Bearer ${token}`}
-		var options = {hostname: alexa_api, headers: alexa_headers, method: 'GET'};
-		console.log(options);
-		https.get(options, (res) => {
-			var body = '';
-			res.on('data', (data) => {
-				body += data;
-			});
-			res.on('end', () => {
-				var data = JSON.parse(body);
-				console.log(data);
-				return {
-					countryCode: data.countryCode,
-					postalCode: data.postalCode
-				};
-			});
-		})
 	}
 };
