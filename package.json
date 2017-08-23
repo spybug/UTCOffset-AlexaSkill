@@ -6,7 +6,7 @@
   "author": "Karl I",
   "license": "ISC",
   "dependencies": {
-    "alexa-sdk": "^1.0.11",
+    "alexa-sdk": "^1.0.12",
     "googlemaps": "^1.12.0",
     "moment": "^2.18.1"
   }

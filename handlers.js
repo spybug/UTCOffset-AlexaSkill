@@ -1,7 +1,7 @@
 'use strict';
 var moment = require('moment');
 var gmaps = require('googlemaps');
-//var https = require('https');
+var https = require('https');
 const ASK = ':ask';
 const TELL = ':tell';
 const UTC_SSML = "<say-as interpret-as='spell-out'>utc</say-as>";
@@ -13,7 +13,24 @@ var gmapsConfig = {
     secure:             true, // use https
 };
 
-var gmapsAPI = gmaps(gmapsConfig);
+var gmapsAPI = new gmaps(gmapsConfig);
+
+var getLatLon = function(location) {
+    var geocodeParams = {
+        'address' : location
+    };
+    gmapsAPI.geocode(geocodeParams, function(err, result) {
+      console.log(result);
+      var latlon = result.results[0].geometry.location;
+      console.log(latlon);
+
+      return latlon;
+    });
+};
+
+var getTimezone = function(lat, lon) {
+    return true;
+};
 
 module.exports = {
 
@@ -36,18 +53,16 @@ module.exports = {
 	"GetCityOffset": function() {
 		try {
             if(this.event.request.intent.slots.location_us.value !== undefined) {
-                loc = this.event.request.intent.slots.location_us.value
-                var geocodeParams = {
-                    address=loc
-                };
-                gmapsAPI.geocode(geocodeParams, function(err, result){
-                  console.log(result);
-                });
+                var loc = this.event.request.intent.slots.location_us.value
+                console.log(loc);
+                var latlon = getLatLon(loc);
+
+                this.emit(TELL, latlon);
             }
 		}
 		catch(e) {
-			this.emit(TELL, "Error getting local time from device");
-			console.log(e)
+            console.log(e);
+			this.emit(TELL, "Error getting utc time from location");
 		}
 	},
 
@@ -82,10 +97,5 @@ module.exports = {
 				};
 			});
 		})
-	},
-
-	getLatLon : function(countryCode, postalCode) {
-		console.log(countryCode);
-		console.log(postalCode);
 	}
 };
