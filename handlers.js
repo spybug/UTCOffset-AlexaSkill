@@ -56,12 +56,12 @@ var getCityTime = function(context, locname, lat, lon) {
 
         context.emit(TELL, `The current local time in ${locname} is: ${timestr} on ${dateSSML}`);
     });
-}
+};
 
 module.exports = {
 
 	"LaunchRequest": function() {
-        this.emit(TELL, `This is the ${UTC_SSML} Offset app.`);
+        this.emit(ASK, `This is the ${UTC_SSML} Helper app. It can help you find out the current ${UTC_SSML} time plus the ${UTC_SSML} offset and the current time for locations around the world. If you would like, please ask me any of those things or say stop to exit.`);
     },
 
     "GetUTCTime": function() {
@@ -102,10 +102,10 @@ module.exports = {
             console.log(e);
 			this.emit(TELL, "Error getting utc time from location");
 		}
-    }
+    },
 
 	"AMAZON.HelpIntent": function() {
-		this.emit(ASK, `Please ask for the current time in ${UTC_SSML}`);
+		this.emit(ASK, `I can give you the current ${UTC_SSML} time by asking me for the ${UTC_SSML} time. I can also give you the ${UTC_SSML} offset for a location by asking me for the ${UTC_SSML} offset in some location. You can also ask for the local time of that location. Please ask me something now or say stop to exit.`);
 	},
 
 	"AMAZON.CancelIntent": function() {
