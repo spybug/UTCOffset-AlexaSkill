@@ -26,7 +26,7 @@ var getLatLon = function(context, location, callback) {
     });
 };
 
-var getTimezone = function(context, locname, lat, lon) {
+var getTimezoneOffset = function(context, locname, lat, lon) {
     var timezoneParams = {
         'location' : `${lat},${lon}`,
         'timestamp' : moment().unix()
@@ -41,6 +41,22 @@ var getTimezone = function(context, locname, lat, lon) {
         context.emit(TELL, `The current offset in ${locname} is <break time="200ms"/> ${timezoneOffset} hours ${compareWord} ${UTC_SSML} time.`);
     });
 };
+
+var getCityTime = function(context, locname, lat, lon) {
+    var timezoneParams = {
+        'location' : `${lat},${lon}`,
+        'timestamp' : moment().unix()
+    };
+    gmapsAPI.timezone(timezoneParams, function(err, result) {
+        var timezoneOffset = (result.rawOffset + result.dstOffset) / 3600;
+        var curTime = moment().utc().add(timezoneOffset, 'hours');
+        var datestr = curTime.format("MMDD");
+        var timestr = curTime.format("HH:mm");
+        var dateSSML = `<say-as interpret-as='date'>????${datestr}</say-as>`;
+
+        context.emit(TELL, `The current local time in ${locname} is: ${timestr} on ${dateSSML}`);
+    });
+}
 
 module.exports = {
 
@@ -64,8 +80,8 @@ module.exports = {
 		try {
             if(this.event.request.intent.slots.location_us.value !== undefined) {
                 var loc = this.event.request.intent.slots.location_us.value
-                console.log(loc);
-                var result = getLatLon(this, loc, getTimezone);
+                console.log("City offset: " + loc);
+                getLatLon(this, loc, getTimezoneOffset);
             }
 		}
 		catch(e) {
@@ -73,6 +89,20 @@ module.exports = {
 			this.emit(TELL, "Error getting utc time from location");
 		}
 	},
+
+    "GetCityTime": function() {
+        try {
+            if(this.event.request.intent.slots.location_us.value !== undefined) {
+                var loc = this.event.request.intent.slots.location_us.value
+                console.log("City time: " + loc);
+                getLatLon(this, loc, getCityTime);
+            }
+		}
+		catch(e) {
+            console.log(e);
+			this.emit(TELL, "Error getting utc time from location");
+		}
+    }
 
 	"AMAZON.HelpIntent": function() {
 		this.emit(ASK, `Please ask for the current time in ${UTC_SSML}`);
